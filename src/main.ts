@@ -36,7 +36,7 @@ breakoutSheet.parse(async frames => {
   const container = new PIXI.Container()
   app.stage.addChild(container)
   global.stateMachine.states = {
-    // start: () => new StartState(container),
+    start: () => new StartState(container),
     // play: () => new PlayState(container)
     // serve: new ServeState(levelContainer),
     // 'game-over': new GameOverState(gameoverContainer),

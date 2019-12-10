@@ -1,6 +1,9 @@
-import {BaseState} from '../utils'
 import global from '../global'
 import Paddle from '../Paddle'
+import Brick from '../Brick'
+import Ball from '../Ball'
+import {BaseState, center} from '../utils'
+import { VirtualScreen } from '../constants'
 
 export class PlayState extends BaseState {
   paddle!:Paddle
@@ -34,22 +37,22 @@ export class PlayState extends BaseState {
   }
   update (delta:number) {
     if (this.paused) {
-      if (keyPressedSet.has(' ')) {
+      if (global.input.keyPressedSet.has(' ')) {
         this.paused = false
         this.pauseTxt.visible = false
-        sounds['pause'].play()
+        global.sounds['pause'].play()
       } else
         return
-    } else if (keyPressedSet.has(' ')) {
+    } else if (global.input.keyPressedSet.has(' ')) {
         this.paused = true
         this.pauseTxt.visible = true
-        sounds['pause'].play()
+        global.sounds['pause'].play()
         return
     }
 
     this.paddle.update(delta)
     this.ball.update(delta)
-    
+
     if (this.ball.collides(this.paddle)) {
       this.ball.y -= 8
       this.ball.dy = -this.ball.dy
@@ -59,7 +62,7 @@ export class PlayState extends BaseState {
       } else if (this.ball.x > this.paddle.x + (this.paddle.width / 2) && this.paddle.dx > 0) {
         this.ball.dx = 1 + (0.15 * Math.abs(this.paddle.x + this.paddle.width / 2 - this.ball.x))
       }
-      sounds['paddle-hit'].play()
+      global.sounds['paddle-hit'].play()
     }
 
     let collidlBrick = false
@@ -69,7 +72,7 @@ export class PlayState extends BaseState {
         this.score += (brick.tier * 200 + brick.color * 25)
         brick.hit()
         if (this.checkVictory()) {
-          sounds['victory'].play()
+          global.sounds['victory'].play()
           global.stateMachine.change('victory', {
             level: this.level,
             paddle: this.paddle,
@@ -101,7 +104,7 @@ export class PlayState extends BaseState {
 
     if (this.ball.y >= VirtualScreen.height) {
         this.health -= 1
-        sounds['hurt'].play()
+        global.sounds['hurt'].play()
 
         if (this.health == 0) {
           global.stateMachine.change('game-over', {
@@ -128,8 +131,8 @@ export class PlayState extends BaseState {
     this.paddle.render()
     this.ball.render()
 
-    HeartRender.renderScore(this.container, this.score)
-    HeartRender.rednerHeart(this.container, this.health)
+    // HeartRender.renderScore(this.container, this.score)
+    // HeartRender.rednerHeart(this.container, this.health)
   }
   checkVictory ():boolean {
     return !this.bricks.some(brick => {

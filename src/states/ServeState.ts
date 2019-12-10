@@ -1,6 +1,9 @@
-import {BaseState} from '../utils'
+import {BaseState, center} from '../utils'
 import global from '../global'
 import Paddle from '../Paddle'
+import Brick from '../Brick'
+import Ball from '../Ball'
+import { VirtualScreen } from '../constants'
 
 export class ServeState extends BaseState {
   paddle?:Paddle
@@ -21,7 +24,7 @@ export class ServeState extends BaseState {
     this.score = params.score
 
     this.ball = new Ball(this.levelContainer, Math.ceil(Math.random() * 7))
-   
+
     this.levelContainer.addChild(this.msgTxt)
     this.levelContainer.visible = true
   }
@@ -37,7 +40,7 @@ export class ServeState extends BaseState {
       this.ball.y = this.paddle.y - 8
     }
 
-    if (keyPressedSet.has('Enter')) {
+    if (global.input.keyPressedSet.has('Enter')) {
       global.stateMachine.change('play', {
         paddle: this.paddle,
         bricks: this.bricks,
@@ -59,7 +62,7 @@ export class ServeState extends BaseState {
 
     this.bricks.forEach(brick => brick.render())
 
-    HeartRender.renderScore(this.levelContainer, this.score)
-    HeartRender.rednerHeart(this.levelContainer, this.health)
+    // HeartRender.renderScore(this.levelContainer, this.score)
+    // HeartRender.rednerHeart(this.levelContainer, this.health)
   }
 }

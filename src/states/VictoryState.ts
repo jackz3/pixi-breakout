@@ -1,5 +1,9 @@
-import {BaseState} from '../utils'
+import {BaseState, center} from '../utils'
 import global from '../global'
+import Paddle from '../Paddle'
+import Ball from '../Ball'
+import { VirtualScreen } from '../constants'
+import LevelMaker from '../LevelMaker'
 
 export class VictoryState extends BaseState {
   level = 0
@@ -39,7 +43,7 @@ export class VictoryState extends BaseState {
       this.ball.y = this.paddle.y - 8
     }
 
-    if (keyPressedSet.has('Enter')) {
+    if (global.input.keyPressedSet.has('Enter')) {
       global.stateMachine.change('serve', {
             level: this.level + 1,
             bricks: LevelMaker.createMap(this.container, this.level + 1),
@@ -50,7 +54,7 @@ export class VictoryState extends BaseState {
     }
   }
   render () {
-    HeartRender.rednerHeart(this.container, this.health)
-    HeartRender.renderScore(this.container, this.score)
+    // HeartRender.rednerHeart(this.container, this.health)
+    // HeartRender.renderScore(this.container, this.score)
   }
 }

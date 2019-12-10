@@ -1,5 +1,6 @@
 import global from './global'
 import { PADDLE_SPEED, VirtualScreen } from './constants'
+import {Sprite} from 'pixi.js'
 
 export default class Paddle {
   x = VirtualScreen.width / 2 - 32
@@ -8,9 +9,9 @@ export default class Paddle {
   width = 64
   height = 16
   size = 2
-  sprite:PIXI.Sprite
+  sprite:Sprite
   constructor (public container:PIXI.Container, public skin:number) {
-    this.sprite = new PIXI.Sprite()
+    this.sprite = new Sprite()
     this.sprite.texture = global.frames[`paddle${this.size + 4 * (this.skin - 1)}`]// as PIXI.Texture
     container.addChild(this.sprite)
   }

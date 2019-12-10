@@ -7,4 +7,4 @@ export const VirtualScreen = {
   height: 243
 }
 
-export const PADDLE_SPEED = 3.33
+export const PADDLE_SPEED = 4

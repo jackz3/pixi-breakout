@@ -4,8 +4,9 @@ import Brick from '../Brick'
 import Ball from '../Ball'
 import {BaseState, center} from '../utils'
 import { VirtualScreen } from '../constants'
+import { Text } from 'pixi.js'
 
-export class PlayState extends BaseState {
+export default class PlayState extends BaseState {
   paddle!:Paddle
   ball!:Ball
   bricks:Brick[] = []
@@ -13,7 +14,7 @@ export class PlayState extends BaseState {
   score = 0
   level = 0
   paused = false
-  pauseTxt = new PIXI.Text('PAUSED', {fill: 'white', fontFamily: ['Arial'], fontSize: 32})
+  pauseTxt = new Text('PAUSED', {fill: 'white', fontFamily: ['Arial'], fontSize: 32})
   constructor (public container:PIXI.Container) {
     super()
     this.pauseTxt.visible = false

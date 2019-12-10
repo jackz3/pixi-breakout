@@ -1,4 +1,5 @@
 import global from './global'
+import { Sprite } from 'pixi.js'
 
 const paletteColors:{[idx:string]:string} = {
   '1': '639cff',
@@ -13,11 +14,11 @@ export default class Brick {
   width = 32
   height = 16
   inPlay = true
-  sprite:PIXI.Sprite
+  sprite:Sprite
   // pSystem?:ParticleSystem
   constructor (public container:PIXI.Container, public x:number, public y:number) {
-    this.sprite = new PIXI.Sprite()
-    // this.sprite.texture = global.frames[`bricks${1 + ((this.color - 1) * 4) + this.tier}`]
+    this.sprite = new Sprite()
+    this.sprite.texture = global.frames[`bricks${1 + ((this.color - 1) * 4) + this.tier}`]
     container.addChild(this.sprite)
   }
   setTexture () {

@@ -5,7 +5,7 @@ import Ball from '../Ball'
 import { VirtualScreen } from '../constants'
 import LevelMaker from '../LevelMaker'
 
-export class VictoryState extends BaseState {
+export default class VictoryState extends BaseState {
   level = 0
   score = 0
   paddle?:Paddle

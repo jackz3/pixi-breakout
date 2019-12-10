@@ -1,20 +1,21 @@
-import {BaseState, center} from '../utils'
+import {BaseState, center, rand} from '../utils'
 import global from '../global'
 import Paddle from '../Paddle'
 import Brick from '../Brick'
 import Ball from '../Ball'
 import { VirtualScreen } from '../constants'
+import { Text } from 'pixi.js'
+import { CommonRender } from '../common'
 
-export class ServeState extends BaseState {
+export default class ServeState extends BaseState {
   paddle?:Paddle
   bricks:Brick[] = []
   health:number = 0
   score:number = 0
   ball?:Ball
-  msgTxt = new PIXI.Text('Press Enter to serve!', {fill: 'white', fontFamily: ['Arial'], fontSize: 24})
+  msgTxt = new Text('Press Enter to serve!', {fill: 'white', fontFamily: ['Arial'], fontSize: 24})
   constructor (public levelContainer:PIXI.Container) {
     super()
-    // this.msgTxt.visible = false
     center(this.msgTxt, VirtualScreen.width, VirtualScreen.height / 2)
   }
   enter (params:{paddle:Paddle, bricks:Brick[], health:number, score:number}) {
@@ -26,7 +27,7 @@ export class ServeState extends BaseState {
     this.ball = new Ball(this.levelContainer, Math.ceil(Math.random() * 7))
 
     this.levelContainer.addChild(this.msgTxt)
-    this.levelContainer.visible = true
+    // this.levelContainer.visible = true
   }
   exit () {
     this.levelContainer.removeChild(this.msgTxt)
@@ -62,7 +63,7 @@ export class ServeState extends BaseState {
 
     this.bricks.forEach(brick => brick.render())
 
-    // HeartRender.renderScore(this.levelContainer, this.score)
-    // HeartRender.rednerHeart(this.levelContainer, this.health)
+    CommonRender.renderScore(this.levelContainer, this.score)
+    CommonRender.rednerHeart(this.levelContainer, this.health)
   }
 }

@@ -2,7 +2,7 @@ import global from '../global'
 import { VirtualScreen } from '../constants'
 import {BaseState, center} from '../utils'
 
-export class GameOverState extends BaseState {
+export default class GameOverState extends BaseState {
   score:number = 0
   gameoverTxt = new PIXI.Text('GAME OVER', {fill: 'white', fontFamily: ['Arial'], fontSize: 36})
   scoreTxt = new PIXI.Text('Final Score: ', {fill: 'white', fontFamily: ['Arial'], fontSize: 24})

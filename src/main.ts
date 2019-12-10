@@ -3,6 +3,10 @@ import {Screen, VirtualScreen} from './constants'
 import {generateQuads, getSpriteFrames} from './utils'
 import global from './global'
 import StartState from './states/StartState'
+import PlayState from './states/PlayState'
+import ServeState from './states/ServeState'
+import GameOverState from './states/GameOverState'
+import VictoryState from './states/VictoryState'
 
 const app = new PIXI.Application({
   ...Screen
@@ -37,12 +41,15 @@ breakoutSheet.parse(async frames => {
   app.stage.addChild(container)
   global.stateMachine.states = {
     start: () => new StartState(container),
-    // play: () => new PlayState(container)
-    // serve: new ServeState(levelContainer),
-    // 'game-over': new GameOverState(gameoverContainer),
-    // victory: new VictoryState(gameoverContainer)
+    play: () => new PlayState(container),
+    serve: () => new ServeState(container),
+    'game-over': () => new GameOverState(container),
+    victory: () => new VictoryState(container),
+    // 'paddle-select': () => new
+    //  ['high-scores'] = function() return HighScoreState() end,
+        // ['enter-high-score'] = function() return EnterHighScoreState() end,
   }
-  global.stateMachine.change('start')
+  global.stateMachine.change('start', {highScores: []})
   app.ticker.add((delta) => {
     global.stateMachine.update(delta)
     global.stateMachine.render()

@@ -1,16 +1,21 @@
-export class Ball {
+import global from './global'
+import {Sprite, Container} from 'pixi.js'
+import {VirtualScreen} from './constants'
+import {aabbCollision} from './utils'
+
+export default class Ball {
   width = 8
   height = 8
   dy = 0
   dx = 0
   x = 0
   y = 0
-  sprite: PIXI.Sprite
-  constructor (public container:PIXI.Container, public skin:number) {
-    this.sprite = new PIXI.Sprite()
+  sprite: Sprite
+  constructor (public container:Container, public skin:number) {
+    this.sprite = new Sprite()
     // this.sprite.visible = false
     this.sprite.texture = global.frames[`balls${this.skin}`]
-    this.addToContainer()
+    container.addChild(this.sprite)
   }
   init () {
     this.dx = Math.random() * 6 - 3
@@ -35,19 +40,19 @@ export class Ball {
     if (this.x <= 0) {
       this.x = 0
       this.dx = -this.dx
-      sounds['wall-hit'].play()
+      global.sounds['wall-hit'].play()
     }
 
     if (this.x >= VirtualScreen.width - 8) {
         this.x = VirtualScreen.width - 8
         this.dx = -this.dx
-        sounds['wall-hit'].play()
+        global.sounds['wall-hit'].play()
     }
 
     if (this.y <= 0) {
       this.y = 0
       this.dy = -this.dy
-      sounds['wall-hit'].play()
+      global.sounds['wall-hit'].play()
     }
   }
   render () {

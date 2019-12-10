@@ -1,5 +1,6 @@
-import {BaseState} from '../utils'
 import global from '../global'
+import { VirtualScreen } from '../constants'
+import {BaseState, center} from '../utils'
 
 export class GameOverState extends BaseState {
   score:number = 0
@@ -25,7 +26,7 @@ export class GameOverState extends BaseState {
     this.container.visible = false
   }
   update (delta:number) {
-    if (keyPressedSet.has('Enter')) {
+    if (global.input.keyPressedSet.has('Enter')) {
       global.stateMachine.change('start')
     }
 

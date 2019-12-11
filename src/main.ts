@@ -7,6 +7,7 @@ import PlayState from './states/PlayState'
 import ServeState from './states/ServeState'
 import GameOverState from './states/GameOverState'
 import VictoryState from './states/VictoryState'
+import PaddleSelectState from './states/PaddleSelectState'
 import localforage from 'localforage'
 
 const app = new PIXI.Application({
@@ -21,19 +22,22 @@ bgSprite.width = VirtualScreen.width + 1
 bgSprite.height = VirtualScreen.height + 2
 app.stage.addChild(bgSprite)
 
+const arrowsTexture = PIXI.BaseTexture.from('../assets/arrows.png')
+const arrowsSheetObj = generateQuads(48, 24, 24, 24, 'arrows')
+const arrowsFrames = getSpriteFrames(arrowsTexture, arrowsSheetObj)
 const heartsTexture = PIXI.BaseTexture.from('../assets/hearts.png')
 const heartsSheetObj = generateQuads(20, 9, 10, 9, 'hearts')
 const heartsFrames = getSpriteFrames(heartsTexture, heartsSheetObj)
 
 const breakoutTexture = PIXI.BaseTexture.from('../assets/breakout.png')
-const breakoutSheetObj = generateQuads(192, 128, 16, 16, 'entities')
+const breakoutSheetObj = generateQuads(192, 128, 32, 16, 'bricks')
 generateQuadsPaddles(breakoutSheetObj)
 generateQuadsBalls(breakoutSheetObj)
 const breakoutSheet = new PIXI.Spritesheet(breakoutTexture, breakoutSheetObj)
 breakoutSheet.parse(async frames => {
   global.frames = {...global.frames, ...frames}
 
-  const allFrames = await Promise.all([heartsFrames])
+  const allFrames = await Promise.all([heartsFrames, arrowsFrames])
   allFrames.reduce((res, x) => {
     return Object.assign(res, x)
   }, global.frames)
@@ -46,7 +50,7 @@ breakoutSheet.parse(async frames => {
     serve: () => new ServeState(container),
     'game-over': () => new GameOverState(container),
     victory: () => new VictoryState(container),
-    // 'paddle-select': () => new
+    'paddle-select': () => new PaddleSelectState(container)
     //  ['high-scores'] = function() return HighScoreState() end,
         // ['enter-high-score'] = function() return EnterHighScoreState() end,
   }
@@ -64,7 +68,7 @@ function generateQuadsPaddles (spriteSheetObj:any) {
 
   let counter = 1
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     spriteSheetObj.frames['paddle' + counter] = {
       "frame": {"x": x,"y": y,"w": 32,"h": 16},
       "rotated": false,

@@ -16,10 +16,10 @@ export default class Brick {
   inPlay = true
   sprite:Sprite
   // pSystem?:ParticleSystem
-  constructor (public container:PIXI.Container, public x:number, public y:number) {
+  constructor (/*public container:PIXI.Container, */public x:number, public y:number) {
     this.sprite = new Sprite()
     this.sprite.texture = global.frames[`bricks${1 + ((this.color - 1) * 4) + this.tier}`]
-    container.addChild(this.sprite)
+    // container.addChild(this.sprite)
   }
   setTexture () {
     this.sprite.texture = global.frames[`bricks${1 + ((this.color - 1) * 4) + this.tier}`]

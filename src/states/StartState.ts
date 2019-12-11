@@ -41,13 +41,6 @@ export default class StartState extends BaseState {
 
       if (this.highlighted === 1) {
         global.stateMachine.change('paddle-select', {highScores: this.highScores})
-        global.stateMachine.change('serve', {
-          paddle: new Paddle(this.container, 1),
-          bricks: LevelMaker.createMap(this.container),
-          health: 3,
-          score: 0,
-          level: 1
-        })
       } else {
         global.stateMachine.change('high-scores', {highScores: this.highScores})
       }

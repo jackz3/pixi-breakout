@@ -1,4 +1,4 @@
-import {BaseState, center, rand} from '../utils'
+import {BaseState, rand, hCenter} from '../utils'
 import global from '../global'
 import Paddle from '../Paddle'
 import Brick from '../Brick'
@@ -13,25 +13,32 @@ export default class ServeState extends BaseState {
   health:number = 0
   score:number = 0
   ball?:Ball
-  msgTxt = new Text('Press Enter to serve!', {fill: 'white', fontFamily: ['Arial'], fontSize: 24})
+  highScores = 0
+  level = 0
+  recoverPoints = 0
+  TitleTxt = new Text('', {fill: 'white', fontSize: 30})
+  msgTxt = new Text('Press Enter to serve!', {fill: 'white', fontFamily: ['Arial'], fontSize: 14})
   constructor (public levelContainer:PIXI.Container) {
     super()
-    center(this.msgTxt, VirtualScreen.width, VirtualScreen.height / 2)
+    this.TitleTxt.y = VirtualScreen.height / 3
+    this.msgTxt.y = VirtualScreen.height / 2
+    hCenter(this.msgTxt, VirtualScreen.width)
   }
-  enter (params:{paddle:Paddle, bricks:Brick[], health:number, score:number}) {
+  enter (params:any) {
     this.paddle = params.paddle
     this.bricks = params.bricks
     this.health = params.health
     this.score = params.score
-
-    this.ball = new Ball(this.levelContainer, Math.ceil(Math.random() * 7))
-
-    this.levelContainer.addChild(this.msgTxt)
-    // this.levelContainer.visible = true
+    this.highScores = params.highScores
+    this.level = params.level
+    this.recoverPoints = params.recoverPoints
+    this.ball = new Ball(rand(7, 1))
+    this.TitleTxt.text = `Level ${this.level}`
+    hCenter(this.TitleTxt, VirtualScreen.width)
+    this.levelContainer.addChild(this.paddle!.sprite, this.ball!.sprite, ...this.bricks.map(x => x.sprite), this.msgTxt, this.TitleTxt)
   }
   exit () {
-    this.levelContainer.removeChild(this.msgTxt)
-    // this.msgTxt.visible = false
+    this.levelContainer.removeChildren()
   }
   update (delta:number) {
     this.ball!.x = 1
@@ -47,10 +54,12 @@ export default class ServeState extends BaseState {
         bricks: this.bricks,
         health: this.health,
         score: this.score,
-        ball: this.ball
+        ball: this.ball,
+        highScores: this.highScores,
+        level: this.level,
+        recoverPoints: this.recoverPoints
       })
     }
-
     // if love.keyboard.wasPressed('escape') then
     //     love.event.quit()
     // end

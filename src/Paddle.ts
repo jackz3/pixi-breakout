@@ -10,10 +10,10 @@ export default class Paddle {
   height = 16
   size = 2
   sprite:Sprite
-  constructor (public container:PIXI.Container, public skin:number) {
+  constructor (/*public container:PIXI.Container, */public skin:number) {
     this.sprite = new Sprite()
     this.sprite.texture = global.frames[`paddle${this.size + 4 * (this.skin - 1)}`]// as PIXI.Texture
-    container.addChild(this.sprite)
+    // container.addChild(this.sprite)
   }
   // addTo (container?:PIXI.Container) {
   //   if (container) {

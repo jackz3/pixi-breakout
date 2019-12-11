@@ -7,6 +7,7 @@ import PlayState from './states/PlayState'
 import ServeState from './states/ServeState'
 import GameOverState from './states/GameOverState'
 import VictoryState from './states/VictoryState'
+import localforage from 'localforage'
 
 const app = new PIXI.Application({
   ...Screen
@@ -17,7 +18,7 @@ app.stage.scale.set(Screen.width / VirtualScreen.width, Screen.height / VirtualS
 
 const bgSprite = PIXI.Sprite.from('../assets/background.png')
 bgSprite.width = VirtualScreen.width + 1
-bgSprite.height = VirtualScreen.height + 2 
+bgSprite.height = VirtualScreen.height + 2
 app.stage.addChild(bgSprite)
 
 const heartsTexture = PIXI.BaseTexture.from('../assets/hearts.png')

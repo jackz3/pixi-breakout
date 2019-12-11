@@ -19,6 +19,7 @@
   "homepage": "https://github.com/jackz3/pixi-breakout#readme",
   "dependencies": {
     "howler": "^2.1.2",
+    "localforage": "^1.7.3",
     "pixi-particles": "^4.2.0",
     "pixi.js": "^5.2.0"
   },

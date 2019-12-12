@@ -8,7 +8,7 @@ import ServeState from './states/ServeState'
 import GameOverState from './states/GameOverState'
 import VictoryState from './states/VictoryState'
 import PaddleSelectState from './states/PaddleSelectState'
-import localforage from 'localforage'
+import Storage from './Storage'
 
 const app = new PIXI.Application({
   ...Screen
@@ -54,7 +54,7 @@ breakoutSheet.parse(async frames => {
     //  ['high-scores'] = function() return HighScoreState() end,
         // ['enter-high-score'] = function() return EnterHighScoreState() end,
   }
-  global.stateMachine.change('start', {highScores: []})
+  global.stateMachine.change('start', {highScores: await new Storage().load()})
   app.ticker.add((delta) => {
     global.stateMachine.update(delta)
     global.stateMachine.render()

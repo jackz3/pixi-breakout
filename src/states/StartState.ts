@@ -19,9 +19,7 @@ export default class StartState extends BaseState {
     hCenter(this.startTxt, VirtualScreen.width)
     this.highScoresTxt.y = VirtualScreen.height / 2 + 90
     hCenter(this.highScoresTxt, VirtualScreen.width)
-    container.addChild(this.titleTxt)
-    container.addChild(this.startTxt)
-    container.addChild(this.highScoresTxt)
+    container.addChild(this.titleTxt, this.startTxt, this.highScoresTxt)
     this.renderMenu()
   }
   enter (params:any) {

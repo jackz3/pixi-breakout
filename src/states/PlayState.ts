@@ -2,9 +2,10 @@ import global from '../global'
 import Paddle from '../Paddle'
 import Brick from '../Brick'
 import Ball from '../Ball'
-import {BaseState, center} from '../utils'
+import {BaseState, hCenter} from '../utils'
 import { VirtualScreen } from '../constants'
 import { Text } from 'pixi.js'
+import {CommonRender} from '../common'
 
 export default class PlayState extends BaseState {
   paddle!:Paddle
@@ -14,27 +15,30 @@ export default class PlayState extends BaseState {
   score = 0
   level = 0
   paused = false
-  pauseTxt = new Text('PAUSED', {fill: 'white', fontFamily: ['Arial'], fontSize: 32})
+  highScores = []
+  recoverPoints = 0
+  pauseTxt = new Text('PAUSED', {fill: 'white', fontFamily: ['Arial'], fontSize: 30, fontWeight: 'bold'})
   constructor (public container:PIXI.Container) {
     super()
     this.pauseTxt.visible = false
-    center(this.pauseTxt, VirtualScreen.width, VirtualScreen.height / 2)
-    container.addChild(this.pauseTxt)
-
+    this.pauseTxt.y = VirtualScreen.height / 2 - 16
+    hCenter(this.pauseTxt, VirtualScreen.width)
   }
-  enter (params:{paddle:Paddle, bricks:Brick[], health:number, score:number, ball:Ball, level:number}) {
+  enter (params:any) {
     this.paddle = params.paddle
     this.bricks = params.bricks
     this.health = params.health
     this.score = params.score
+    this.highScores = params.highScores
     this.level = params.level
     this.ball = params.ball
+    this.recoverPoints = params.recoverPoints
     this.ball.init()
 
-    this.container.visible = true
+    this.container.addChild(this.paddle.sprite, this.ball.sprite, ...this.bricks.map(x => x.sprite), this.pauseTxt)
   }
   exit () {
-    this.container.visible = false
+    this.container.removeChildren()
   }
   update (delta:number) {
     if (this.paused) {
@@ -109,15 +113,19 @@ export default class PlayState extends BaseState {
 
         if (this.health == 0) {
           global.stateMachine.change('game-over', {
-            score: this.score, container: this.container
+            score: this.score,
+            highScores: this.highScores
           })
           this.container.removeChildren()
         } else {
           global.stateMachine.change('serve', {
-                paddle: this.paddle,
-                bricks: this.bricks,
-                health: this.health,
-                score: this.score
+              paddle: this.paddle,
+              bricks: this.bricks,
+              health: this.health,
+              score: this.score,
+              highScores: this.highScores,
+              level: this.level,
+              recoverPoints: this.recoverPoints
             })
           }
         }
@@ -132,8 +140,8 @@ export default class PlayState extends BaseState {
     this.paddle.render()
     this.ball.render()
 
-    // HeartRender.renderScore(this.container, this.score)
-    // HeartRender.rednerHeart(this.container, this.health)
+    CommonRender.renderScore(this.container, this.score)
+    CommonRender.rednerHeart(this.container, this.health)
   }
   checkVictory ():boolean {
     return !this.bricks.some(brick => {

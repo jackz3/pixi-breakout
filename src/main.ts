@@ -8,6 +8,7 @@ import ServeState from './states/ServeState'
 import GameOverState from './states/GameOverState'
 import VictoryState from './states/VictoryState'
 import PaddleSelectState from './states/PaddleSelectState'
+import HighScoreState from './states/HighScoreState'
 import Storage from './Storage'
 
 const app = new PIXI.Application({
@@ -50,8 +51,8 @@ breakoutSheet.parse(async frames => {
     serve: () => new ServeState(container),
     'game-over': () => new GameOverState(container),
     victory: () => new VictoryState(container),
-    'paddle-select': () => new PaddleSelectState(container)
-    //  ['high-scores'] = function() return HighScoreState() end,
+    'paddle-select': () => new PaddleSelectState(container),
+    'high-scores': () => new HighScoreState(container)
         // ['enter-high-score'] = function() return EnterHighScoreState() end,
   }
   global.stateMachine.change('start', {highScores: await new Storage().load()})

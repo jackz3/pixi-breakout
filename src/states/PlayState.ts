@@ -35,6 +35,7 @@ export default class PlayState extends BaseState {
     this.recoverPoints = params.recoverPoints
     this.ball.init()
 
+    this.bricks.forEach(b => b.setTexture(this.container))
     this.container.addChild(this.paddle.sprite, this.ball.sprite, ...this.bricks.map(x => x.sprite), this.pauseTxt)
   }
   exit () {
@@ -75,7 +76,7 @@ export default class PlayState extends BaseState {
       brick.update(delta)
       if (brick.inPlay && this.ball.collides(brick)) {
         this.score += (brick.tier * 200 + brick.color * 25)
-        brick.hit()
+        brick.hit(this.container)
         if (this.checkVictory()) {
           global.sounds['victory'].play()
           global.stateMachine.change('victory', {

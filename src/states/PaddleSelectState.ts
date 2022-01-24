@@ -54,7 +54,7 @@ export default class PaddleSelectState extends BaseState {
       global.sounds['confirm'].play()
       global.stateMachine.change('serve', {
           paddle: new Paddle(this.currentPaddle),
-          bricks: LevelMaker.createMap(32),
+          bricks: LevelMaker.createMap(this.container, 32),
           health: 3,
           score: 0,
           highScores: this.highScores,

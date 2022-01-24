@@ -11,7 +11,7 @@ export default class Input {
     })
     document.addEventListener('keyup', e => {
       this.keyDownSet.delete(e.key)
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Escape'].includes(e.key)) {
         this.keyPressedSet.add(e.key)
         this.onKeyPressed(e.key)
       }

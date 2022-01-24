@@ -5,8 +5,8 @@ import { VirtualScreen } from '../constants'
 
 export default class HighScoreState extends BaseState {
   highScores:any[] = []
-  titleTxt = new Text('High Scores', {fontSize: '30'})
-  msgTxt = new Text('Press Escape to return to the main menu!', {fontSize: '14'})
+  titleTxt = new Text('High Scores', {fontSize: '30', fill: 'white', fontWeight: 'bold'})
+  msgTxt = new Text('Press Escape to return to the main menu!', {fontSize: '14', fill: 'white'})
   constructor (public container:Container) {
     super()
     this.titleTxt.y = 20
@@ -17,6 +17,10 @@ export default class HighScoreState extends BaseState {
   enter (params:any) {
     this.highScores = params.highScores
     this.container.addChild(this.titleTxt, this.msgTxt)
+    this.renderScores()
+  }
+  exit () {
+    this.container.removeChildren()
   }
   update (delta:number) {
     // -- return to the start screen if we press escape
@@ -27,7 +31,7 @@ export default class HighScoreState extends BaseState {
         })
     }
   }
-  render() {
+  renderScores() {
     // love.graphics.setFont(gFonts['medium'])
     // -- iterate over all high score indices in our high scores table
     for (let i = 0; i < 10; i++) {
@@ -35,17 +39,17 @@ export default class HighScoreState extends BaseState {
         let score = this.highScores[i].score || '---'
         // -- score number (1-10)
         const line = i + 1
-        const noTxt = new Text(`${line}.`, {fontSize: 14, wordWrap: true, wordWrapWidth: 50})
+        const noTxt = new Text(`${line}.`, {fontSize: 14, wordWrap: true, wordWrapWidth: 50, fill: 'white'})
         noTxt.x = VirtualScreen.width / 4
         noTxt.y = 60 + line * 13
         // love.graphics.printf(tostring(i) .. '.', VIRTUAL_WIDTH / 4,             60 + i * 13, 50, 'left')
         // -- score name
-        const nameTxt = new Text(name, {fontSize: 14, wordWrap: true, wordWrapWidth: 50, align: 'right'})
+        const nameTxt = new Text(name, {fontSize: 14, wordWrap: true, wordWrapWidth: 50, align: 'right', fill: 'white'})
         nameTxt.x = VirtualScreen.width / 4 + 38
         nameTxt.y = 60 + line * 13
         // love.graphics.printf(name, VIRTUAL_WIDTH / 4 + 38,             60 + i * 13, 50, 'right')
         // -- score itself
-        const scoreTxt = new Text(score, {fontSize: 14, wordWrap: true, wordWrapWidth: 100, align: 'right'})
+        const scoreTxt = new Text(score, {fontSize: 14, wordWrap: true, wordWrapWidth: 100, align: 'right', fill: 'white'})
         scoreTxt.x = VirtualScreen.width / 2
         scoreTxt.y = 60 + line * 13
         // love.graphics.printf(tostring(score), VIRTUAL_WIDTH / 2,            60 + i * 13, 100, 'right')

@@ -14,7 +14,6 @@ export default class Ball {
   constructor (/*public container:Container, */public skin:number) {
     this.sprite = new Sprite()
     this.sprite.texture = global.frames[`balls${this.skin}`]
-    // container.addChild(this.sprite)
   }
   init () {
     this.dx = Math.random() * 6 - 3

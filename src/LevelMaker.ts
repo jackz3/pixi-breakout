@@ -2,7 +2,7 @@ import Brick from './Brick'
 import { rand } from './utils'
 
 export default class LevelMaker {
-  static createMap (/*container:PIXI.Container, */level:number = 1):Brick[] {
+  static createMap (container:PIXI.Container, level:number = 1):Brick[] {
     // const NONE = 1
     // const SINGLE_PYRAMID = 2
     // const MULTI_PYRAMID = 3
@@ -66,13 +66,13 @@ export default class LevelMaker {
             b.color = solidColor
             b.tier = solidTier
         }
-        b.setTexture()
+        // b.setTexture(container)
         bricks.push(b)
       }
     }
 
     if (bricks.length == 0) {
-      return LevelMaker.createMap(level)
+      return LevelMaker.createMap(container, level)
     }
     return bricks
   }

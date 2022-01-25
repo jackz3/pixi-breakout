@@ -11,7 +11,8 @@ public:
   GlobalSound() {
     std::string sources[][2] = {
       {"paddle-hit","../assets/paddle_hit.wav"},
-      {"confirm", "../assets/confirm.wav"}
+      {"confirm", "../assets/confirm.wav"},
+      {"wall-hit","../assets/wall_hit.wav"}
     };
     int len = sizeof sources / sizeof sources[0];
     InitAudioDevice();

@@ -5,6 +5,7 @@
 #include <vector>
 #include "raylib.h"
 #include "sound.h"
+#include "util.h"
 
 namespace breakout {
 const int VirtualWidth = 432;
@@ -14,41 +15,10 @@ const int ScreenWidth = VirtualWidth * ScaleRatio;
 const int ScreenHeight = VirtualHeight * ScaleRatio;
 const int PADDLE_SPEED = 200;
 Texture2D main_texture;
-std::map<std::string, std::vector<Rectangle>> GSprites = {};
 std::map<std::string, Sound> GSounds = {};
 GlobalSound gSound;
+std::map<std::string, std::unique_ptr<std::vector<Rectangle>>> GSprites;
 
-auto GenerateQuadsPaddles(std::map<std::string, std::vector<Rectangle>>& gSprites, Texture2D atlas) {
-  int x = 0;
-  int y = 64;
-  int counter = 1;
-  std::vector<Rectangle> quads = {};
-
-  for (int i = 0; i < 4; i++) {
-        // -- smallest
-    quads.push_back(Rectangle{(float)x, (float)y, 32, 16});
-        // quads[counter] = Rectangle{(float)x, (float)y, 32, 16};
-        counter = counter + 1;
-        // -- medium
-        // quads[counter] = love.graphics.newQuad(x + 32, y, 64, 16,
-        //     atlas:getDimensions())
-        // counter = counter + 1;
-        // -- large
-        // quads[counter] = love.graphics.newQuad(x + 96, y, 96, 16,
-        //     atlas:getDimensions())
-        // counter = counter + 1;
-        // -- huge
-        // quads[counter] = love.graphics.newQuad(x, y + 16, 128, 16,
-        //     atlas:getDimensions())
-        // counter = counter + 1;
-
-        // -- prepare X and Y for the next set of paddles
-        x = 0;
-        y = y + 32;
-  }
-  gSprites["paddles"] = quads;
-  return true;
-}
 int GetCenterX(const char* text, int fontSize, int width = ScreenWidth) {
   return (ScreenWidth - MeasureText(text, fontSize)) / 2;
 }
@@ -59,6 +29,11 @@ Rectangle ScaleRect(float x, float y, int width, int height) {
 
 class Paddle {
 public:
+  float x = VirtualWidth / 2 - 32;
+  float y = VirtualHeight - 32;
+  int width = 64;
+  int height = 16;
+  // Paddle(int skin) : skin{skin} {}
   void update(float delta) {
     if (IsKeyDown(KEY_LEFT)) {
       dx = -PADDLE_SPEED;
@@ -75,18 +50,75 @@ public:
   }
   void render() {
     // love.graphics.draw(gTextures['main'], gFrames['paddles'][self.size + 4 * (self.skin - 1)],        self.x, self.y)
-    // std::cout << x << " ,  " << y << std::endl;
-    // Rectangle r = {0, 0, (float)breakout::ScreenWidth + breakout::ScaleRatio + 2, (float)breakout::ScreenHeight + breakout::ScaleRatio + 2};
-    DrawTexturePro(main_texture, frameRec, ScaleRect(x, y, width, height), {0.f, 0.f}, 0.f, WHITE);
+    DrawTexturePro(main_texture, frame, ScaleRect(x, y, width, height), {0.f, 0.f}, 0.f, WHITE);
   }
 private:
-  float x = VirtualWidth / 2 - 32;
-  float y = VirtualHeight - 32;
+  int skin = 0;
   float dx = 0;
-  int width = 64;
-  int height = 16;
   int size = 2;
-  Rectangle frameRec = { 0.0f, 0.0f, (float)width, (float)height };
+  Rectangle frame = (*GSprites["paddles"])[size + 4 * skin];
+};
+
+class Ball {
+public:
+  float x = 0;
+  float y = 0;
+  int dy = 0;
+  int dx = 0;
+  Ball(int skin) : skin{skin} {}
+  bool collides(Paddle paddle) {
+    return CheckCollisionRecs(Rectangle{x, y, (float)width, (float)height}, Rectangle{paddle.x, paddle.y, (float)paddle.width, (float)paddle.height});
+    // -- first, check to see if the left edge of either is farther to the right
+    // -- than the right edge of the other
+    // if self.x > target.x + target.width or target.x > self.x + self.width then
+    //     return false
+    // end
+    // -- then check to see if the bottom edge of either is higher than the top
+    // -- edge of the other
+    // if self.y > target.y + target.height or target.y > self.y + self.height then
+    //     return false
+    // end 
+    // -- if the above aren't true, they're overlapping
+    // return true
+  }
+    void update(float delta) {
+      x += dx * delta;
+      y += dy * delta;
+
+    if (x <= 0) {
+      x = 0;
+      dx = -dx;
+      gSound.play("wall-hit");
+    }
+
+    if (x >= VirtualWidth - 8) {
+        x = VirtualWidth - 8;
+        dx = -dx;
+        gSound.play("wall-hit");
+    }
+
+    if (y <= 0) {
+      y = 0;
+      dy = -dy;
+      gSound.play("wall-hit");
+    }
+
+    }
+    void render() {
+    // love.graphics.draw(gTextures['main'], gFrames['balls'][self.skin],        self.x, self.y)
+      Rectangle frame = (*GSprites["balls"])[skin];
+      DrawTexturePro(main_texture, frame, ScaleRect(x, y, width, height), {0.f, 0.f}, 0.f, WHITE);
+    }
+    void Reset() {
+      x = VirtualWidth / 2 - 2;
+      y = VirtualHeight / 2 - 2;
+      dx = 0;
+      dy = 0;
+    }
+private:
+  int width = 8;
+  int height = 8;
+  int skin;
 };
 
 class BaseState {
@@ -166,15 +198,31 @@ private:
 
 class PlayState : public BaseState {
 public:
+  PlayState() {
+    ball_.dx = GetRandomValue(-200, 200);
+    ball_.dy = GetRandomValue(-50, -60);
+    // -- give ball position in the center
+    ball_.x = VirtualWidth / 2 - 4;
+    ball_.y = VirtualHeight - 42;
+
+  }
   void update(float delta) {
     paddle_.update(delta);
+    ball_.update(delta);
+
+    if (ball_.collides(paddle_)) {
+      // ball_.y -= 8;
+      ball_.dy = -ball_.dy;
+      gSound.play("paddle-hit");
+    }
   }
   void render() {
     paddle_.render();
-
+    ball_.render();
   }
 private:
   Paddle paddle_;
+  Ball ball_{1};
 };
 
 
@@ -183,6 +231,9 @@ int main() {
   std::cout << breakout::ScreenWidth << " , " << breakout::ScreenHeight << std::endl;
   InitWindow(breakout::ScreenWidth, breakout::ScreenHeight, "Breakout");
 	SetWindowState(FLAG_VSYNC_HINT);
+
+  breakout::GSprites["paddles"] = GenerateQuadsPaddles();
+  breakout::GSprites["balls"] = GenerateQuadsBalls();
 
   breakout::main_texture = LoadTexture("../assets/breakout.png");
   Texture2D gb_texture = LoadTexture("../assets/background.png");

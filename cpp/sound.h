@@ -12,7 +12,17 @@ public:
     std::string sources[][2] = {
       {"paddle-hit","../assets/paddle_hit.wav"},
       {"confirm", "../assets/confirm.wav"},
-      {"wall-hit","../assets/wall_hit.wav"}
+      {"wall-hit","../assets/wall_hit.wav"},
+      {"select", "../assets/select.wav"},
+      {"no-select", "../assets/no-select.wav"},
+      {"brick-hit-1", "../assets/brick-hit-1.wav"},
+      {"brick-hit-2", "../assets/brick-hit-2.wav"},
+      {"hurt", "../assets/hurt.wav"},
+      {"victory", "../assets/victory.wav"},
+      {"recover", "../assets/recover.wav"},
+      {"high-score", "../assets/high_score.wav"},
+      {"pause", "../assets/pause.wav"},
+      {"music", "../assets/music.wav"}
     };
     int len = sizeof sources / sizeof sources[0];
     InitAudioDevice();

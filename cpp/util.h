@@ -48,3 +48,20 @@ auto GenerateQuadsBalls() {
     }
     return quads;
 }
+
+auto GenerateQuads(Texture2D atlas, int tilewidth, int tileheight) {
+    int sheetWidth = atlas.width / tilewidth;
+    int sheetHeight = atlas.height / tileheight;
+
+    std::unique_ptr<std::vector<Rectangle>> spritesheet(new std::vector<Rectangle>);
+    for(int y = 0; y < sheetHeight; y++) {
+        for(int x = 0; x < sheetWidth; x++) {
+            spritesheet->push_back(Rectangle{float(x * tilewidth), float(y * tileheight), (float)tilewidth, (float)tileheight});
+        }
+    }
+    return spritesheet;
+}
+
+// auto GenerateQuadsBricks() {
+//     return GenerateQuads(atlas, 32, 16), 1, 21)
+// }

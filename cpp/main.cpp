@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <map>
@@ -19,6 +20,7 @@ const int ScreenHeight = VirtualHeight * ScaleRatio;
 const int PADDLE_SPEED = 200;
 Texture2D gb_texture;
 Texture2D main_texture;
+Texture2D hearts_texture;
 std::map<std::string, Sound> GSounds = {};
 GlobalSound gSound;
 std::map<std::string, std::unique_ptr<std::vector<Rectangle>>> GSprites;
@@ -30,6 +32,28 @@ int GetCenterX(const char* text, int fontSize, int width = ScreenWidth) {
 Rectangle ScaleRect(float x, float y, int width, int height) {
   return Rectangle { x * ScaleRatio, y * ScaleRatio, width * ScaleRatio, height * ScaleRatio };
 }
+
+void RenderScore(int score) {
+    // love.graphics.setFont(gFonts['small'])
+    // love.graphics.print('Score:', VirtualWidth - 50, 5)
+    // love.graphics.printf(tostring(score), VIRTUAL_WIDTH - 50, 5, 40, 'right')
+  DrawText(("Score: " + std::to_string(score)).c_str(), ScreenWidth - 120, 6, 16, WHITE);
+}
+
+void RenderHealth(int health) {
+    float healthX = ScreenWidth - 200;
+    for(int i = 0; i < health; i++) {
+      std::cout << healthX << std::endl;
+        // love.graphics.draw(gTextures['hearts'], gFrames['hearts'][1], healthX, 4)
+      DrawTextureRec(hearts_texture, (*GSprites["hearts"])[0], { healthX, 8 }, WHITE);
+      healthX = healthX + 22;
+    }
+    for(int i = 0; i < (3 - health); i++) {
+        // love.graphics.draw(gTextures['hearts'], gFrames['hearts'][2], healthX, 4)
+      healthX = healthX + 22;
+    }
+}
+
 
 class Brick {
 public:
@@ -61,7 +85,8 @@ public:
   float y = VirtualHeight - 32;
   int width = 64;
   int height = 16;
-  // Paddle(int skin) : skin{skin} {}
+  float dx = 0;
+  Paddle(int skin = 0) : skin{skin} {}
   void update(float delta) {
     if (IsKeyDown(KEY_LEFT)) {
       dx = -PADDLE_SPEED;
@@ -82,7 +107,6 @@ public:
   }
 private:
   int skin = 0;
-  float dx = 0;
   int size = 2;
   Rectangle frame = (*GSprites["paddles"])[size + 4 * skin];
 };
@@ -171,9 +195,11 @@ auto createMap(int level = 1) {
     } 
     return bricks;
 }
+template<typename T>
 class BaseState {
 public:
-  void enter (std::map<std::string, std::string> params = {}) {}
+  // void enter (std::string) {}
+  virtual void enter (T params) {}
   void exit() {}
   virtual void update (float delta) {}
   virtual void render() {}
@@ -189,11 +215,12 @@ public:
   void SetStates(std::map<std::string, BaseState*>& initialStates) {
     states = initialStates;
   }
-  void change(std::string stateName) {
+  template<typename T>
+  void change(std::string stateName, T params) {
     if(states[stateName] != nullptr) {
       current->exit();
       current = states[stateName];
-      current->enter();
+      current->enter(params);
     }
   }
   void update (float delta) {
@@ -213,7 +240,72 @@ private:
 
 StateMachine stateMachine;
 
-class StartState : public BaseState {
+struct ServeParams
+{
+  Paddle paddle;
+  std::vector<Brick> bricks; 
+  int health;
+  int score;
+};
+
+struct PlayParams {
+  Paddle paddle;
+  std::vector<Brick> bricks; 
+  int health;
+  int score;
+  Ball ball;
+};
+
+class ServeState : public BaseState<ServeParams> {
+public:
+  void enter (ServeParams params) {
+    std::cout << params.health << " , " << params.score << std::endl;
+    paddle_ = params.paddle;
+    bricks_ = params.bricks;
+    health_ = params.health;
+    score_ = params.score;
+    // ball_ = Ball(GetRandomValue(0, 7));
+  }
+  void update(float delta) {
+    paddle_.update(delta);
+    ball_.x = paddle_.x + (paddle_.width / 2) - 4;
+    ball_.y = paddle_.y - 8;
+
+    if(IsKeyPressed(KEY_ENTER)) {
+        // -- pass in all important state info to the PlayState
+      stateMachine.change("play", PlayParams{
+          paddle_,
+          bricks_,
+          health_,
+          score_,
+          ball_,
+      });
+    }
+  }
+  void render() {
+    paddle_.render();
+    ball_.render();
+    for (auto& brick : bricks_) {
+      brick.render();
+    }
+
+    RenderScore(score_);
+    RenderHealth(health_);
+    // love.graphics.setFont(gFonts['medium'])
+    // love.graphics.printf('Press Enter to serve!', 0, VIRTUAL_HEIGHT / 2,    VIRTUAL_WIDTH, 'center')
+    DrawText(txt, GetCenterX(txt, font_size_), (ScreenHeight - font_size_) / 2, font_size_, WHITE);
+  }
+private:
+  Paddle paddle_;
+  std::vector<Brick> bricks_; 
+  int health_;
+  int score_;
+  Ball ball_{GetRandomValue(0, 7)};
+  const char* txt = "Press Enter to serve!";
+  int font_size_ = 48;
+};
+
+class StartState : public BaseState<int> {
 public:
   void update(float delta) override {
     if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)) {
@@ -224,7 +316,8 @@ public:
       gSound.play("confirm");
 
       if (highlighted == 1) {
-        stateMachine.change("play");
+        // stateMachine.change("play", 0);
+        stateMachine.change("serve", ServeParams{Paddle(0), createMap(), 3, 0});
       } else {
         // global.stateMachine.change('high-scores', {highScores: this.highScores})
       }
@@ -246,30 +339,72 @@ private:
   Color highlightColor = (Color){ 103, 255, 255, 255 };
 };
 
-class PlayState : public BaseState {
+class PlayState : public BaseState<PlayParams> {
 public:
-  PlayState() {
+  void enter(PlayParams params) {
+    paddle_ = params.paddle;
+    bricks_ = params.bricks;
+    health_ = params.health;
+    score_ = params.score;
+    ball_ = params.ball;
+
+    // -- give ball random starting velocity
     ball_.dx = GetRandomValue(-200, 200);
     ball_.dy = GetRandomValue(-50, -60);
-    // -- give ball position in the center
-    ball_.x = VirtualWidth / 2 - 4;
-    ball_.y = VirtualHeight - 42;
-
-    bricks_ = createMap();
   }
   void update(float delta) {
     paddle_.update(delta);
     ball_.update(delta);
 
     if (ball_.collides(Rectangle{paddle_.x, paddle_.y, (float)paddle_.width, (float)paddle_.height})) {
-      // ball_.y -= 8;
+      // -- raise ball above paddle in case it goes below it, then reverse dy
+      ball_.y -= 8;
       ball_.dy = -ball_.dy;
+        // -- tweak angle of bounce based on where it hits the paddle
+        // -- if we hit the paddle on its left side while moving left...
+      if(ball_.x < paddle_.x + (paddle_.width / 2) && paddle_.dx < 0) {
+        ball_.dx = -50 + -(8 * (paddle_.x + paddle_.width / 2 - ball_.x));
+      }
+      // -- else if we hit the paddle on its right side while moving right...
+      else if(ball_.x > paddle_.x + (paddle_.width / 2)  && paddle_.dx > 0) {
+        ball_.dx = 50 + (8 * (ball_.x - (paddle_.x + paddle_.width / 2)));
+      }
+
       gSound.play("paddle-hit");
     }
 
     for(auto& b : bricks_) {
       if(b.inPlay && ball_.collides(Rectangle{b.x, b.y, (float)b.width, (float)b.height})) {
         b.hit();
+
+        if(ball_.x + 2 < b.x and ball_.dx > 0) {
+          ball_.dx = -ball_.dx;
+          ball_.x = b.x - 8;
+        } 
+        // -- right edge; only check if we're moving left, , and offset the check by a couple of pixels
+        // -- so that flush corner hits register as Y flips, not X flips
+        else if(ball_.x + 6 > b.x + b.width && ball_.dx < 0) {
+          // -- flip x velocity and reset position outside of brick
+          ball_.dx = -ball_.dx;
+          ball_.x = b.x + 32;
+        }
+            // -- top edge if no X collisions, always check
+        else if(ball_.y < b.y) {
+          // -- flip y velocity and reset position outside of brick
+          ball_.dy = -ball_.dy;
+          ball_.y = b.y - 8;
+        }
+        // -- bottom edge if no X collisions or top collision, last possibility
+        else {
+          // -- flip y velocity and reset position outside of brick
+          ball_.dy = -ball_.dy;
+          ball_.y = b.y + 16;
+        }
+        // -- slightly scale the y velocity to speed up the game, capping at +- 150
+        if(abs(ball_.dy) < 150) {
+          ball_.dy = ball_.dy * 1.02;
+        }
+        break;
       }
     }
   }
@@ -284,6 +419,8 @@ private:
   Paddle paddle_;
   Ball ball_{1};
   std::vector<Brick> bricks_;
+  int health_;
+  int score_;
 };
 
 
@@ -292,9 +429,11 @@ private:
 void LoadRes() {
   breakout::gb_texture = LoadTexture("../assets/background.png");
   breakout::main_texture = LoadTexture("../assets/breakout.png");
+  breakout::hearts_texture = LoadTexture("../assets/hearts.png");
   breakout::GSprites["paddles"] = GenerateQuadsPaddles();
   breakout::GSprites["balls"] = GenerateQuadsBalls();
   breakout::GSprites["bricks"] = GenerateQuads(breakout::main_texture, 32, 16);
+  breakout::GSprites["hearts"] = GenerateQuads(breakout::hearts_texture, 10, 9);
 }
 void UpdateDrawFrame(void)
 {
@@ -317,9 +456,13 @@ int main() {
 
   auto startState = breakout::StartState();
   auto playState = breakout::PlayState();
-  std::map<std::string, breakout::BaseState*> initialState = { {"start", &startState}, {"play", &playState} };
+  auto serveState = breakout::ServeState();
+  std::map<std::string, breakout::BaseState*> initialState = {
+    {"start", &startState},
+    {"play", &playState},
+    {"serve", &serveState} };
   breakout::stateMachine.SetStates(initialState);
-  breakout::stateMachine.change("start");
+  breakout::stateMachine.change("start", 0);
   #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
   #else
@@ -327,19 +470,6 @@ int main() {
     UpdateDrawFrame();
   }
   #endif
-  // while (!WindowShouldClose()) {
-  //   float delta = GetFrameTime();
-  //   breakout::stateMachine.update(delta);
-  //   BeginDrawing();
-	// 		ClearBackground(BLACK);
-
-
-  //     DrawTexturePro(gb_texture, {0, 0, (float)gb_texture.width, (float)gb_texture.height}, {0, 0, (float)breakout::ScreenWidth + breakout::ScaleRatio + 2, (float)breakout::ScreenHeight + breakout::ScaleRatio + 2}, {0, 0}, 0, WHITE);
-  //     breakout::stateMachine.render();
-
-	// 		DrawFPS(10, 10);
-	// 	EndDrawing();
-  // }
   UnloadTexture(breakout::gb_texture);
   UnloadTexture(breakout::main_texture);
   breakout::gSound.unload();

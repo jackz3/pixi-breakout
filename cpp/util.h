@@ -3,8 +3,13 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 #include "raylib.h"
 
+template<typename T>
+void log(char* txt, T info) {
+    std::cout << txt << ":" << info << std::endl;
+}
 auto GenerateQuadsPaddles() {
     int x = 0;
     int y = 64;

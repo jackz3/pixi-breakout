@@ -27,7 +27,10 @@
 			"problemMatcher": [
 				"$gcc"
 			],
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"detail": "编译器: C:\\msys64\\mingw64\\bin\\g++.exe"
 		}
 	]

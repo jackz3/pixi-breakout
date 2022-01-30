@@ -37,7 +37,7 @@ public:
     Sound sound = sounds_[name];
     PlaySoundMulti(sound);
   }
-  void unload() {
+  ~GlobalSound() {
     StopSoundMulti();       // We must stop the buffer pool before unloading
     for (auto& sound : sounds_) {
       UnloadSound(sound.second);

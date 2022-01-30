@@ -7,7 +7,7 @@
 #include "raylib.h"
 
 template<typename T>
-void log(char* txt, T info) {
+void log(const char* txt, T info) {
     std::cout << txt << ":" << info << std::endl;
 }
 auto GenerateQuadsPaddles() {

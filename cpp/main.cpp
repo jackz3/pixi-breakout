@@ -9,7 +9,6 @@
 #include "raylib.h"
 #include "common.h"
 #include "sound.h"
-#include "util.h"
 #include "objects.h"
 #if defined(PLATFORM_WEB)
   #include <emscripten/emscripten.h>
@@ -17,14 +16,12 @@
 
 namespace breakout {
 
-
 class BaseState {
 public:
   virtual void enter (std::shared_ptr<void> ptr) {}
   virtual void exit() {}
   virtual void update (float delta) {}
   virtual void render() {}
-  // void processAI(params:any, delta:number) {}
 };
 
 class StateMachine {
@@ -66,16 +63,75 @@ struct ServeParams
   std::vector<Brick> bricks; 
   int health;
   int score;
+  std::vector<HighScore> highScore;
+  int level;
+  int recoverPoints;
 };
-
 struct PlayParams {
   Paddle paddle;
   std::vector<Brick> bricks; 
   int health;
   int score;
   Ball ball;
+  std::vector<HighScore> highScore;
+  int level;
+  int recoverPoints;
+};
+struct VictoryParams {
+  Paddle paddle;
+  int health;
+  int score;
+  Ball ball;
+  std::vector<HighScore> highScore;
+  int level;
+  int recoverPoints;
 };
 
+class VictoryState : public BaseState {
+public:
+  void enter(std::shared_ptr<void> ptr) {
+    auto params = *(VictoryParams*)(ptr.get());
+    paddle_ = params.paddle;
+    health_ = params.health;
+    score_ = params.score;
+    highScore_ = params.highScore;
+    level_ = params.level;
+    recoverPoints_ = params.recoverPoints;
+    ball_ = params.ball;
+  }
+  void update(float delta) {
+    paddle_.update(delta);
+    // -- have the ball track the player
+    ball_.x = paddle_.x + (paddle_.width / 2) - 4;
+    ball_.y = paddle_.y - 8;
+    if(IsKeyPressed(KEY_ENTER)) {
+      stateMachine.change("serve", std::shared_ptr<void>(new ServeParams{paddle_, createMap(level_ + 1), health_, score_, highScore_, level_ + 1, recoverPoints_}));
+    }
+  }
+  void render() {
+    paddle_.render();
+    ball_.render();
+
+    RenderHealth(health_);
+    RenderScore(score_);
+    // love.graphics.printf("Level " .. tostring(self.level) .. " complete!",    0, VIRTUAL_HEIGHT / 4, VIRTUAL_WIDTH, 'center')
+    const char* str_levele = TextFormat("Level %i complete!", level_);
+    DrawText(str_levele, GetCenterX(str_levele, LargeFontSize), ScreenHeight / 4, LargeFontSize, WHITE);
+    // love.graphics.printf('Press Enter to serve!', 0, VIRTUAL_HEIGHT / 2,        VIRTUAL_WIDTH, 'center')
+    const char* str_press = "Press Enter to serve!";
+    DrawText(str_press, GetCenterX(str_press, MediumFontSize), ScreenHeight / 2, MediumFontSize, WHITE);
+  }
+private:
+  Paddle paddle_;
+  Ball ball_;
+  int health_;
+  int score_;
+  const char* txt = "Press Enter to serve!";
+  std::vector<HighScore> highScore_;
+  int level_;
+  int recoverPoints_;
+
+};
 struct GameOverParams {
   int score;
 };
@@ -114,6 +170,9 @@ public:
     bricks_ = params.bricks;
     health_ = params.health;
     score_ = params.score;
+    highScore_ = params.highScore;
+    level_ = params.level;
+    recoverPoints_ = params.recoverPoints;
   }
   void update(float delta) {
     paddle_.update(delta);
@@ -128,6 +187,9 @@ public:
           health_,
           score_,
           ball_,
+          highScore_,
+          level_,
+          recoverPoints_
       }));
     }
   }
@@ -152,39 +214,133 @@ private:
   Ball ball_{GetRandomValue(0, 7)};
   const char* txt = "Press Enter to serve!";
   int font_size_ = 48;
+  std::vector<HighScore> highScore_;
+  int level_;
+  int recoverPoints_;
 };
 
+struct StartParams {
+  std::vector<HighScore> highScore;
+};
+class HighScoreState : public BaseState {
+public:
+  void enter(std::shared_ptr<void> ptr) override {
+    StartParams params = *(StartParams*)(ptr.get());
+    highScore_ = params.highScore;
+  }
+  void update(float delta) override {
+    if(IsKeyPressed(KEY_ESCAPE)) {
+      gSound.Play("wall-hit");
+      stateMachine.change("start", std::shared_ptr<void>(new StartParams{highScore_}));
+    }
+  } 
+  void render() override {
+    DrawText(str_highscore_, GetCenterX(str_highscore_, LargeFontSize), 20 * ScaleRatio, LargeFontSize, WHITE);
+    int idx = 0;
+    for(auto& hs : highScore_) {
+      DrawText(TextFormat("%02i.", (idx + 1)), (VirtualWidth / 4) * ScaleRatio,  (60 + idx * 16) * ScaleRatio, MediumFontSize, WHITE);
+      DrawText(hs.name.c_str(), (VirtualWidth / 4 + 38) * ScaleRatio,  (60 + idx * 16) * ScaleRatio, MediumFontSize, WHITE);
+      DrawText(std::to_string(hs.score).c_str(), (VirtualWidth / 2) * ScaleRatio,  (60 + idx * 16) * ScaleRatio, MediumFontSize, WHITE);
+      idx++;
+    }
+  }
+private:
+  std::vector<HighScore> highScore_;
+  const char* str_highscore_ = "High Scores";
+
+};
 class StartState : public BaseState {
 public:
+  void enter(std::shared_ptr<void> ptr) override {
+    StartParams params = *(StartParams*)(ptr.get());
+    highScore_ = params.highScore;
+  }
   void update(float delta) override {
     if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN)) {
       highlighted = highlighted == 1 ? 2 : 1;
-      gSound.play("paddle-hit");
+      gSound.Play("paddle-hit");
 		}
     if (IsKeyPressed(KEY_ENTER)) {
-      gSound.play("confirm");
+      gSound.Play("confirm");
 
       if (highlighted == 1) {
-        stateMachine.change("serve", std::shared_ptr<void>(new ServeParams{Paddle(0), createMap(), 3, 0}));
+        stateMachine.change("paddle-select", std::shared_ptr<void>(new StartParams{highScore_}));
       } else {
-        // global.stateMachine.change('high-scores', {highScores: this.highScores})
+        stateMachine.change("high-scores", std::shared_ptr<void>(new StartParams{highScore_}));
       }
     }
   }
   void render() override {
-    DrawText(title_, GetCenterX(title_, titleFontSize), (ScreenHeight - 16) / 2 - 60, titleFontSize, WHITE);
-    DrawText(start_, GetCenterX(start_, menuFontSize), (ScreenHeight / 2) + 50, menuFontSize, highlighted == 1 ? highlightColor : WHITE);
-    DrawText(highScore_, GetCenterX(highScore_, menuFontSize), (ScreenHeight / 2) + 90, menuFontSize, highlighted == 2 ? highlightColor : WHITE);
+    DrawText(title_, GetCenterX(title_, LargeFontSize), ScreenHeight / 3 , LargeFontSize, WHITE);
+    DrawText(start_, GetCenterX(start_, MediumFontSize), ScreenHeight / 2 + 140, MediumFontSize, highlighted == 1 ? highlightColor : WHITE);
+    DrawText(str_highScore_, GetCenterX(str_highScore_, MediumFontSize), ScreenHeight / 2 + 180, MediumFontSize, highlighted == 2 ? highlightColor : WHITE);
   }
 private:
   const char* title_ = "BREAKOUT";
   const char* start_ = "START";
-  const char* highScore_ = "HIGH SCORES";
-  int titleFontSize = 80;
-  int menuFontSize = 32;
-  int textWidth = MeasureText(title_, titleFontSize);
+  const char* str_highScore_ = "HIGH SCORES";
+  int textWidth = MeasureText(title_, LargeFontSize);
   int highlighted = 1;
   Color highlightColor = (Color){ 103, 255, 255, 255 };
+  std::vector<HighScore> highScore_;
+};
+
+class PaddleSelectState : public BaseState {
+public:
+  void enter(std::shared_ptr<void> ptr) override {
+    StartParams params = *(StartParams*)(ptr.get());
+    highScore_ = params.highScore;
+  }
+  void update(float delta) {
+    if(IsKeyPressed(KEY_LEFT)) {
+        if(currentPaddle == 0) {
+          gSound.Play("no-select");
+        } else {
+          gSound.Play("select");
+          currentPaddle--;
+        }
+    } else if (IsKeyPressed(KEY_RIGHT)) {
+        if(currentPaddle == 3) {
+          gSound.Play("no-select");
+        } else {
+          gSound.Play("select");
+          currentPaddle++;
+        }
+    }
+    // -- select paddle and move on to the serve state, passing in the selection
+    if(IsKeyPressed(KEY_ENTER)) {
+        gSound.Play("confirm");
+        stateMachine.change("serve", std::shared_ptr<void>(new ServeParams{Paddle(currentPaddle), createMap(32), 3, 0, highScore_, 32, 5000}));
+    }
+  }
+  void render() {
+    // love.graphics.printf("Select your paddle with left and right!", 0, VIRTUAL_HEIGHT / 4,    VIRTUAL_WIDTH, 'center')
+    const char* str_select = "Select your paddle with left and right!";
+    DrawText(str_select, GetCenterX(str_select, MediumFontSize), ScreenHeight / 4, MediumFontSize, WHITE);
+    // love.graphics.printf("(Press Enter to continue!)", 0, VIRTUAL_HEIGHT / 3,        VIRTUAL_WIDTH, 'center')
+    const char* str_press = "(Press Enter to continue!)";
+    DrawText(str_press, GetCenterX(str_press, SmallFontSize), ScreenHeight / 3, SmallFontSize, WHITE); 
+    // -- left arrow; should render normally if we're higher than 1, else
+    // -- in a shadowy form to let us know we're as far left as we can go
+    // -- tint; give it a dark gray with half opacity
+    // love.graphics.setColor(40/255, 40/255, 40/255, 128/255)
+    // love.graphics.draw(gTextures['arrows'], gFrames['arrows'][1], VIRTUAL_WIDTH / 4 - 24,        VIRTUAL_HEIGHT - VIRTUAL_HEIGHT / 3)
+    DrawTexturePro(arrows_texture, (*GSprites["arrows"])[0], ScaleRect(VirtualWidth / 4 - 24, VirtualHeight * 2 / 3, 24, 24), {0, 0}, 0.f, currentPaddle == 0 ? Color{40, 40, 40, 128} : WHITE); 
+   
+    // -- right arrow; should render normally if we're less than 4, else
+    // -- in a shadowy form to let us know we're as far right as we can go
+    // if self.currentPaddle == 4 then
+        // love.graphics.setColor(40/255, 40/255, 40/255, 128/255)
+    // love.graphics.draw(gTextures['arrows'], gFrames['arrows'][2], VIRTUAL_WIDTH - VIRTUAL_WIDTH / 4,    VIRTUAL_HEIGHT - VIRTUAL_HEIGHT / 3)
+    DrawTexturePro(arrows_texture, (*GSprites["arrows"])[1], ScaleRect(VirtualWidth * 3 / 4, VirtualHeight * 2 / 3, 24, 24), {0, 0}, 0.f, currentPaddle == 3 ? Color{40, 40, 40, 128} : WHITE); 
+    
+    // -- draw the paddle itself, based on which we have selected
+    // love.graphics.draw(gTextures['main'], gFrames['paddles'][2 + 4 * (self.currentPaddle - 1)],        VIRTUAL_WIDTH / 2 - 32, VIRTUAL_HEIGHT - VIRTUAL_HEIGHT / 3)
+    DrawTexturePro(main_texture, (*GSprites["paddles"])[2 + 4 * currentPaddle], ScaleRect(VirtualWidth / 2 -32, VirtualHeight * 2 / 3, 64, 16), {0, 0}, 0.f, WHITE);
+  }
+private:
+  int currentPaddle = 0;
+  std::vector<HighScore> highScore_;
 };
 
 class PlayState : public BaseState {
@@ -196,7 +352,9 @@ public:
     health_ = params.health;
     score_ = params.score;
     ball_ = params.ball;
-
+    highScore_ = params.highScore;
+    level_ = params.level;
+    recoverPoints_ = params.recoverPoints;
     // -- give ball random starting velocity
     ball_.dx = GetRandomValue(-200, 200);
     ball_.dy = GetRandomValue(-50, -60);
@@ -205,12 +363,12 @@ public:
     if(paused_) {
       if(IsKeyPressed(KEY_SPACE)) {
         paused_ = false;
-        gSound.play("pause");
+        gSound.Play("pause");
       } else
         return;
     } else if(IsKeyPressed(KEY_SPACE)) {
         paused_ = true;
-        gSound.play("pause");
+        gSound.Play("pause");
         return;
     }
     paddle_.update(delta);
@@ -230,13 +388,24 @@ public:
         ball_.dx = 50 + (8 * (ball_.x - (paddle_.x + paddle_.width / 2)));
       }
 
-      gSound.play("paddle-hit");
+      gSound.Play("paddle-hit");
     }
 
     for(auto& b : bricks_) {
       if(b.inPlay && ball_.collides(Rectangle{b.x, b.y, (float)b.width, (float)b.height})) {
         score_ += (b.tier * 200 + b.color * 25);
         b.hit();
+        // -- if we have enough points, recover a point of health
+        if(score_ > recoverPoints_) {
+          gSound.Play("recover");
+          // -- can't go above 3 health
+          health_ = std::min(3, health_ + 1);
+          recoverPoints_ = std::min(100000, recoverPoints_ * 2);
+        } 
+        if(checkVictory()) {
+          gSound.Play("victory");
+          stateMachine.change("victory", std::shared_ptr<void>(new VictoryParams{ paddle_, health_, score_, ball_, highScore_, level_, recoverPoints_ }));
+        }
 
         if(ball_.x + 2 < b.x and ball_.dx > 0) {
           ball_.dx = -ball_.dx;
@@ -271,12 +440,11 @@ public:
 
     if(ball_.y >= VirtualHeight) {
       health_--;
-      log("health", health_);
-      gSound.play("hurt");
+      gSound.Play("hurt");
       if(health_ == 0) {
         stateMachine.change("game-over", std::shared_ptr<void>(new GameOverParams{score_}));
       } else {
-        stateMachine.change("serve", std::shared_ptr<void>(new ServeParams{paddle_, bricks_, health_, score_}));
+        stateMachine.change("serve", std::shared_ptr<void>(new ServeParams{paddle_, bricks_, health_, score_, highScore_, level_ + 1, recoverPoints_}));
       }
     }
 
@@ -298,58 +466,64 @@ private:
   int health_;
   int score_;
   bool paused_ = false;
+  int level_;
+  int recoverPoints_;
+  std::vector<breakout::HighScore> highScore_;
+  bool checkVictory() {
+    for(auto& brick : bricks_) {
+      if(brick.inPlay) {
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 
 } //end namespace breadout
 
-void LoadRes() {
-  breakout::gb_texture = LoadTexture("../assets/background.png");
-  breakout::main_texture = LoadTexture("../assets/breakout.png");
-  breakout::hearts_texture = LoadTexture("../assets/hearts.png");
-  breakout::GSprites["paddles"] = GenerateQuadsPaddles();
-  breakout::GSprites["balls"] = GenerateQuadsBalls();
-  breakout::GSprites["bricks"] = GenerateQuads(breakout::main_texture, 32, 16);
-  breakout::GSprites["hearts"] = GenerateQuads(breakout::hearts_texture, 10, 9);
-}
 void UpdateDrawFrame(void)
 {
   float delta = GetFrameTime();
   breakout::stateMachine.update(delta);
+  breakout::gSound.UpdateMusic();
   BeginDrawing();
     ClearBackground(WHITE);
 
-    DrawTexturePro(breakout::gb_texture, {0, 0, (float)breakout::gb_texture.width, (float)breakout::gb_texture.height}, {0, 0, (float)breakout::ScreenWidth + breakout::ScaleRatio + 2, (float)breakout::ScreenHeight + breakout::ScaleRatio + 2}, {0, 0}, 0, WHITE);
+    DrawTexturePro(breakout::gb_texture, {0, 0, (float)breakout::gb_texture.width, (float)breakout::gb_texture.height}, {0, 0, (float)breakout::ScreenWidth + breakout::ScaleRatio + 1, (float)breakout::ScreenHeight + breakout::ScaleRatio + 3}, {0, 0}, 0, WHITE);
     breakout::stateMachine.render();
     DrawFPS(10, 10);
   EndDrawing();
 }
 int main() {
-  // std::cout << breakout::ScreenWidth << " , " << breakout::ScreenHeight << std::endl;
   InitWindow(breakout::ScreenWidth, breakout::ScreenHeight, "Breakout");
-	SetWindowState(FLAG_VSYNC_HINT);
-  LoadRes();
+  SetExitKey(KEY_NULL);
+  breakout::LoadRes();
 
   auto startState = breakout::StartState();
   auto playState = breakout::PlayState();
   auto serveState = breakout::ServeState();
   auto gameoverState = breakout::GameOverState();
+  auto highScores = breakout::HighScoreState();
+  auto paddleSelectState = breakout::PaddleSelectState();
   std::map<std::string, breakout::BaseState*> initialState = {
     {"start", &startState},
     {"play", &playState},
     {"serve", &serveState},
-    {"game-over", &gameoverState} };
+    {"game-over", &gameoverState},
+    {"paddle-select", &paddleSelectState},
+    {"high-scores", &highScores} };
   breakout::stateMachine.SetStates(initialState);
-  breakout::stateMachine.change("start");
+  breakout::stateMachine.change("start", breakout::LoadHighScores());
   #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
   #else
+	// SetWindowState(FLAG_VSYNC_HINT);
+  SetTargetFPS(60);
   while (!WindowShouldClose()) {
     UpdateDrawFrame();
   }
   #endif
-  UnloadTexture(breakout::gb_texture);
-  UnloadTexture(breakout::main_texture);
-  UnloadTexture(breakout::hearts_texture);
+  breakout::UnLoadRes();
   return 0;
 }

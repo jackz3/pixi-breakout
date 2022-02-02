@@ -21,8 +21,7 @@ public:
       {"victory", "../assets/victory.wav"},
       {"recover", "../assets/recover.wav"},
       {"high-score", "../assets/high_score.wav"},
-      {"pause", "../assets/pause.wav"},
-      {"music", "../assets/music.wav"}
+      {"pause", "../assets/pause.wav"}
     };
     int len = sizeof sources / sizeof sources[0];
     InitAudioDevice();
@@ -32,19 +31,26 @@ public:
     for (int i = 0; i < len; i++) {
       sounds_[sources[i][0]] = LoadSound((sources[i][1]).c_str());
     }
+    music_ = LoadMusicStream("../assets/music.wav");
+    PlayMusicStream(music_);
   }
-  void play(std::string name) {
+  void Play(std::string name) {
     Sound sound = sounds_[name];
     PlaySoundMulti(sound);
   }
-  ~GlobalSound() {
+  void UpdateMusic() {
+    UpdateMusicStream(music_);
+  }
+  ~GlobalSound() noexcept {
     StopSoundMulti();       // We must stop the buffer pool before unloading
+    StopMusicStream(music_);
+    UnloadMusicStream(music_);
     for (auto& sound : sounds_) {
       UnloadSound(sound.second);
     }
   }
 private:
   std::map<std::string, Sound> sounds_ = {};
-
+  Music music_;
 };
 } // namespace breakout end

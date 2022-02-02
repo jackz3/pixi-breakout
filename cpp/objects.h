@@ -9,7 +9,6 @@
 #include <memory>
 #include "raylib.h"
 #include "common.h"
-#include "util.h"
 
 namespace breakout {
 
@@ -41,9 +40,9 @@ public:
     }
     // -- play a second layer sound if the brick is destroyed
     if(inPlay) {
-      gSound.play("brick-hit-2");
+      gSound.Play("brick-hit-2");
     } else {
-      gSound.play("brick-hit-1");
+      gSound.Play("brick-hit-1");
     }
   }
   void update(float delta) {}
@@ -117,19 +116,19 @@ public:
     if (x <= 0) {
       x = 0;
       dx = -dx;
-      gSound.play("wall-hit");
+      gSound.Play("wall-hit");
     }
 
     if (x >= VirtualWidth - 8) {
         x = VirtualWidth - 8;
         dx = -dx;
-        gSound.play("wall-hit");
+        gSound.Play("wall-hit");
     }
 
     if (y <= 0) {
       y = 0;
       dy = -dy;
-      gSound.play("wall-hit");
+      gSound.Play("wall-hit");
     }
 
     }

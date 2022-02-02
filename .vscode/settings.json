@@ -49,6 +49,14 @@
     "stdexcept": "cpp",
     "streambuf": "cpp",
     "cinttypes": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "cassert": "cpp",
+    "cerrno": "cpp",
+    "climits": "cpp",
+    "fstream": "cpp",
+    "ios": "cpp",
+    "queue": "cpp",
+    "cstdbool": "cpp",
+    "*.inc": "cpp"
   }
 }

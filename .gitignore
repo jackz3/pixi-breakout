@@ -63,3 +63,7 @@ typings/
 dist
 *.exe
 cpp/breakout.lst
+raylib-4.0.0
+build
+include
+lib

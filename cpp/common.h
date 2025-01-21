@@ -52,7 +52,7 @@ void RenderHealth(int health) {
     float healthX = VirtualWidth - 100;
     for(int i = 0; i < health; i++) {
         // love.graphics.draw(gTextures['hearts'], gFrames['hearts'][1], healthX, 4)
-      DrawTexturePro(hearts_texture, (*GSprites["hearts"])[0], ScaleRect(healthX, 4, 10, 9), {0.f, 0.f}, 0.f, WHITE);
+      DrawTexturePro(hearts_texture, Rectangle{0, 0, 100, 100}, Rectangle{0, 0, ScreenWidth, ScreenHeight}, {0.f, 0.f}, 0.f, WHITE);
       healthX = healthX + 11;
     }
     for(int i = 0; i < (3 - health); i++) {
